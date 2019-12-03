@@ -1,14 +1,51 @@
 import SerialPort from "serialport";
+import * as http from "http";
+
+let state = "/loading";
+
 const Readline = SerialPort.parsers.Readline;
 
-const port = new SerialPort('/dev/ttyS8', {
+const port = new SerialPort('/dev/ttyUSB0', {
     baudRate: 115200
-})
+});
+
 const parser = port.pipe(new Readline({
     delimiter: "\n",
     encoding: "ascii",
 }));
 
+setInterval(()=>{
+    let params = {
+        path : state
+    };
+
+    let options : http.RequestOptions = {
+        hostname : "localhost",
+        port : 5000,
+        path : "/update",
+        method : "PUT",
+        headers : {
+            "Content-Type" : "application/json",
+            "Content-Length" : JSON.stringify(params).length
+        }
+    }; 
+
+    let req = http.request(options, function(res){
+        res.setEncoding("utf8");
+    
+        res.on("data", function(body){
+            console.log("body : " + body);
+        })
+        res.on("error", function(e){
+            console.log("Problem with request: " + e.message);
+        });
+    });
+
+    req.write(JSON.stringify(params));
+    req.end();
+}, 1000);
+
+let timer : NodeJS.Timeout | null = null;
 
 function serialOpen()
 {
@@ -16,16 +53,20 @@ function serialOpen()
         if (msg) {
             return console.log(msg.message)
         }
-    
-        // Because there's no callback to write, write errors will be emitted on the port:
-        // port.write('main screen turn on')
     })
     
     // The open event is always emitted
     port.on('open', function () {
         console.log("open success!!");
     })
-    parser.on('data', console.log);
+    parser.on('data', ()=>{
+        if(timer !== null){
+            clearTimeout(timer);
+            timer = setTimeout(()=>{state = "/loading"}, 1000)
+        }
+
+        state = "/video";
+    });
 }
 
 (function main()
