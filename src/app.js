@@ -59,11 +59,10 @@ function serialOpen() {
         console.log("open success!!");
     });
     parser.on('data', (data) => {
-        console.log(data);
         if (timer !== null) {
             clearTimeout(timer);
-            timer = setTimeout(() => { console.log("Hello"); state = "/loading"; }, 1000);
         }
+        timer = setTimeout(() => { console.log("Hello"); state = "/loading"; }, 1000);
         state = "/video";
     });
 }
