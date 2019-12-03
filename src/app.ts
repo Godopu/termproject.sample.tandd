@@ -20,7 +20,7 @@ setInterval(()=>{
     };
 
     let options : http.RequestOptions = {
-        hostname : "localhost",
+        hostname : "192.168.12.216",
         port : 5000,
         path : "/update",
         method : "PUT",
@@ -62,9 +62,8 @@ function serialOpen()
     parser.on('data', ()=>{
         if(timer !== null){
             clearTimeout(timer);
-            timer = setTimeout(()=>{state = "/loading"}, 1000)
+            timer = setTimeout(()=>{console.log("Hello");state = "/loading"}, 1000)
         }
-
         state = "/video";
     });
 }
