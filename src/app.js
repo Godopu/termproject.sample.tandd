@@ -26,7 +26,7 @@ setInterval(() => {
         path: state
     };
     let options = {
-        hostname: "localhost",
+        hostname: "192.168.12.216",
         port: 5000,
         path: "/update",
         method: "PUT",
