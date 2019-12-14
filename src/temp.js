@@ -12,9 +12,10 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const serialport_1 = __importDefault(require("serialport"));
 const http = __importStar(require("http"));
+let config = require("../config.json");
 let state = "/loading";
 const Readline = serialport_1.default.parsers.Readline;
-const port = new serialport_1.default('/dev/ttyS4', {
+const port = new serialport_1.default('/dev/ttyUSB0', {
     baudRate: 9600
 });
 const parser = port.pipe(new Readline({
@@ -27,8 +28,8 @@ function sendUpdateMessage(t, h) {
         humi: h
     };
     let options = {
-        hostname: "192.168.12.216",
-        port: 5000,
+        hostname: config["ip-adr"],
+        port: config["port"],
         path: "/temp",
         method: "PUT",
         headers: {

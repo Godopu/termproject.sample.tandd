@@ -1,11 +1,11 @@
 import SerialPort from "serialport";
 import * as http from "http";
-
+let config = require("../config.json");
 let state = "/loading";
 
 const Readline = SerialPort.parsers.Readline;
 
-const port = new SerialPort('/dev/ttyS4', {
+const port = new SerialPort('/dev/ttyUSB0', {
     baudRate: 9600
 });
 
@@ -22,8 +22,8 @@ function sendUpdateMessage(t : number, h : number){
     };
 
     let options : http.RequestOptions = {
-        hostname : "192.168.12.216",
-        port : 5000,
+        hostname: config["ip-adr"],
+        port: config["port"],
         path : "/temp",
         method : "PUT",
         headers : {
