@@ -5,24 +5,26 @@ let state = "/loading";
 
 const Readline = SerialPort.parsers.Readline;
 
-const port = new SerialPort('/dev/ttyUSB0', {
-    baudRate: 115200
+const port = new SerialPort('/dev/ttyS4', {
+    baudRate: 9600
 });
 
 const parser = port.pipe(new Readline({
     delimiter: "\n",
-    encoding: "ascii",
+    encoding: "utf8",
 }));
 
-setInterval(()=>{
+
+function sendUpdateMessage(t : number, h : number){
     let params = {
-        path : state
+        temp : t,
+        humi : h
     };
 
     let options : http.RequestOptions = {
         hostname : "192.168.12.216",
         port : 5000,
-        path : "/update",
+        path : "/temp",
         method : "PUT",
         headers : {
             "Content-Type" : "application/json",
@@ -43,7 +45,7 @@ setInterval(()=>{
 
     req.write(JSON.stringify(params));
     req.end();
-}, 1000);
+}
 
 let timer : NodeJS.Timeout | null = null;
 
@@ -55,17 +57,12 @@ function serialOpen()
         }
     })
     
-    // The open event is always emitted
-    port.on('open', function () {
-        console.log("open success!!");
-    })
-    parser.on('data', (data)=>{
-        if(timer !== null){
-            clearTimeout(timer);
-        }
-        timer = setTimeout(()=>{console.log("Hello");state = "/loading"}, 1000)
-        state = "/video";
+    parser.on('data', (data : string)=>{
+        let chunk = data.split(",")
+        sendUpdateMessage(Number.parseInt(chunk[0]), Number.parseInt(chunk[1]))
     });
+
+    parser.on("data", console.log)
 }
 
 (function main()

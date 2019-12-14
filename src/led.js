@@ -12,23 +12,49 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const serialport_1 = __importDefault(require("serialport"));
 const http = __importStar(require("http"));
+const config = require("../config.json");
 let state = "/loading";
 const Readline = serialport_1.default.parsers.Readline;
-const port = new serialport_1.default('/dev/ttyUSB0', {
-    baudRate: 115200
+const port = new serialport_1.default('/dev/ttyS4', {
+    baudRate: 9600
 });
 const parser = port.pipe(new Readline({
     delimiter: "\n",
-    encoding: "ascii",
+    encoding: "utf8",
 }));
-setInterval(() => {
+function getStatus() {
+    let options = {
+        hostname: config["ip-adr"],
+        port: config["port"],
+        path: "/led-latest",
+        method: "get",
+    };
+    return new Promise(resolve => {
+        let req = http.request(options, function (res) {
+            res.setEncoding("utf8");
+            let retValue = "";
+            res.on("data", (body) => {
+                retValue += body;
+            });
+            res.on("error", function (e) {
+                console.log("Problem with request: " + e.message);
+            });
+            res.on("end", () => {
+                resolve(JSON.parse(retValue)["state"]);
+            });
+        });
+        req.end();
+    });
+}
+function sendUpdateMessage(t, h) {
     let params = {
-        path: state
+        temp: t,
+        humi: h
     };
     let options = {
         hostname: "192.168.12.216",
         port: 5000,
-        path: "/update",
+        path: "/temp",
         method: "PUT",
         headers: {
             "Content-Type": "application/json",
@@ -46,7 +72,7 @@ setInterval(() => {
     });
     req.write(JSON.stringify(params));
     req.end();
-}, 1000);
+}
 let timer = null;
 function serialOpen() {
     port.open(function (msg) {
@@ -54,19 +80,23 @@ function serialOpen() {
             return console.log(msg.message);
         }
     });
-    // The open event is always emitted
-    port.on('open', function () {
-        console.log("open success!!");
-    });
-    parser.on('data', (data) => {
-        if (timer !== null) {
-            clearTimeout(timer);
-        }
-        timer = setTimeout(() => { console.log("Hello"); state = "/loading"; }, 1000);
-        state = "/video";
-    });
+    // parser.on('data', (data : string)=>{
+    //     let chunk = data.split(",")
+    //     sendUpdateMessage(Number.parseInt(chunk[0]), Number.parseInt(chunk[1]))
+    // });
+    parser.on("data", console.log);
 }
+let status = "loading";
 (function main() {
     serialOpen();
-    // setInterval(() => {port.write("Godopu") }, 5000, 2000);
+    setInterval(async () => {
+        let retValue = await getStatus();
+        if (retValue === status)
+            return;
+        status = retValue;
+        if (status === "on")
+            port.write(`on\n`);
+        else
+            port.write("off\n");
+    }, 1000);
 })();
