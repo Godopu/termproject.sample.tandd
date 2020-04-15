@@ -10,6 +10,7 @@
   "license": "ISC",
   "dependencies": {
     "@types/serialport": "^7.0.4",
-    "serialport": "^8.0.5"
+    "serialport": "^8.0.5",
+    "minimist": ">=1.2.3"
   }
 }
